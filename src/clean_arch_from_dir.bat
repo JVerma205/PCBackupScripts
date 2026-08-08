@@ -32,7 +32,7 @@ if "%mode_choice%"=="1" (
     set "sim_mode=False"
 )
 
-set "log_file=%user_dir%\folder_deletion_log.csv"
+set "log_file=logs\folder_deletion_log.csv"
 echo Log file will be created at: "%log_file%"
 set "temp_file=%temp%\arc_folders_list.tmp"
 
@@ -74,12 +74,23 @@ if not exist "%temp_file%" (
 :: 3. INITIALIZE CSV LOG FILE
 :: ==================================================
 
-(
-    echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
-) > "%log_file%"
+:: Ensure the log directory exists (handles relative paths)
+for %%I in ("%log_file%") do set "log_dir=%%~dpI"
+if not exist "%log_dir%" (
+    mkdir "%log_dir%" 2>nul
+)
 
-echo Log file initialized at: "%log_file%"
-echo.
+:: Write CSV header only if the log file does not already exist
+if not exist "%log_file%" (
+    (
+        echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
+    ) >> "%log_file%"
+    echo Log file initialized at: "%log_file%"
+    echo.
+) else (
+    echo Appending to existing log: "%log_file%"
+    echo.
+)
 
 :: ==================================================
 :: 4. LOG CONTENTS, CALCULATE SIZE, & PROCESS
