@@ -32,7 +32,9 @@ if "%mode_choice%"=="1" (
     set "sim_mode=False"
 )
 
-set "log_file=logs\folder_deletion_log.csv"
+for %%I in ("%user_dir%") do set "log_base_name=%%~nxI"
+if not defined log_base_name set "log_base_name=folder"
+set "log_file=logs\%log_base_name%_folder_deletion_log.csv"
 echo Log file will be created at: "%log_file%"
 set "temp_file=%temp%\arc_folders_list.tmp"
 
