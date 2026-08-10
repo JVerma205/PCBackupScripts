@@ -92,6 +92,17 @@ if not exist "%log_file%" (
     echo.
 )
 
+:: Prepare secondary CSV for folders containing 'prompt'
+set "list_log_file=%log_dir%list_of_prompt_dirs.csv"
+if not exist "%list_log_file%" (
+    (
+        echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
+    ) >> "%list_log_file%"
+    echo Prompt-folders log initialized at: "%list_log_file%"
+) else (
+    echo Appending to existing prompt-folders log: "%list_log_file%"
+)
+
 :: ==================================================
 :: 4. LOG CONTENTS, CALCULATE SIZE, & PROCESS
 :: ==================================================
@@ -104,6 +115,8 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
         set "content_count=0"
         set "folder_size=0"
         set "content_list="
+        set "has_prompt=0"
+        set "skip_delete=0"
 
         for /f "tokens=3 delims= " %%S in ('dir /s /a /-c "%%F" 2^>nul ^| findstr /i /c:"File(s)"') do (
             set "folder_size=%%S"
@@ -118,6 +131,9 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
             ) else (
                 set "content_list=!item_name!"
             )
+
+            :: detect if item name contains 'prompt' (case-insensitive)
+            echo !item_name! | findstr /i "prompt" >nul 2>nul && set "has_prompt=1"
         )
 
         if "%sim_mode%"=="True" (
@@ -133,8 +149,26 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
 
         >> "%log_file%" echo !csv_line!
 
+        :: If any content item contains 'prompt', log to the prompt-list CSV and rename the folder to 'Prompts'
+        if "!has_prompt!"=="1" (
+            set "csv_line2=!csv_line!"
+            >> "%list_log_file%" echo !csv_line2!
+
+            :: compute parent dir and target name
+            for %%P in ("%%F") do set "parent_dir=%%~dpP"
+            set "target_dir=!parent_dir!Prompts"
+            if exist "!target_dir!" set "target_dir=!parent_dir!Prompts_!random!"
+
+            :: attempt rename/move (do not delete this folder)
+            move "%%F" "!target_dir!" >nul 2>&1
+            echo Renamed "%%F" to "!target_dir!"
+            set "skip_delete=1"
+        )
+
         if "%sim_mode%"=="False" (
-            rmdir /s /q "%%F"
+            if not "!skip_delete!"=="1" (
+                rmdir /s /q "%%F"
+            )
         )
     )
 )
