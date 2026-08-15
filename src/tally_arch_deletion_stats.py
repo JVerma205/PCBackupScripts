@@ -3,9 +3,9 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 
-ROOT_DIR = Path(__file__).resolve().parent
+ROOT_DIR = Path(__file__).resolve().parent.parent
 LOGS_DIR = ROOT_DIR / "logs"
-OUTPUT_FILE = ROOT_DIR / "arch_deletion_stats.xlsx"
+OUTPUT_FILE = LOGS_DIR / "arch_deletion_stats.xlsx"
 
 
 def iter_log_csv_files(logs_dir: Path):
@@ -14,7 +14,7 @@ def iter_log_csv_files(logs_dir: Path):
 
     files = []
     for path in sorted(logs_dir.glob("*.csv")):
-        if path.name.lower() == "list_of_prompt_dirs.csv":
+        if path.name.lower() == "list_of_prompt_dirs.csv" or path.name.lower() == "arch_deletion_stats.csv":
             continue
         if path.name.endswith("_sim.csv"):
             continue
