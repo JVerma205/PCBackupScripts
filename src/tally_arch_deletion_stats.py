@@ -28,7 +28,7 @@ def calculate_total_size_mb(csv_path: Path) -> float:
         reader = csv.DictReader(handle)
         for row in reader:
             value = row.get("Folder size in bytes", "0").strip()
-            if not value:
+            if not value or value.startswith("="):
                 continue
             try:
                 total_bytes += int(float(value))
