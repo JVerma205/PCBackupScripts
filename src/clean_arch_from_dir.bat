@@ -84,6 +84,8 @@ for /f "delims=" %%F in ('dir /b /s /ad "%user_dir%" 2^>nul') do (
 
     :: Check if folder name is 'arc' or starts with 'arch'
     if /i "!folder_name!"=="arc" set "is_match=1"
+    if /i "!folder_name!"=="temp" set "is_match=1"
+    if /i "!folder_name!"=="processed-mats" set "is_match=1"
     if /i "!folder_name:~0,4!"=="arch" set "is_match=1"
 
     if "!is_match!"=="1" (
