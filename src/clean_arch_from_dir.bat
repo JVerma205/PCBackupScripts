@@ -107,6 +107,7 @@ for %%I in ("%log_file%") do set "log_dir=%%~dpI"
 if not exist "%log_dir%" (
     mkdir "%log_dir%" 2>nul
 )
+set "error_file=%log_dir%error.txt"
 
 :: Write CSV header only if the log file does not already exist
 if not exist "%log_file%" (
@@ -145,12 +146,21 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
         set "content_list="
         set "has_prompt=0"
         set "skip_delete=0"
+        set "size_found=0"
+        set "content_error_file=%temp%\arc_content_error_!RANDOM!.tmp"
 
         for /f "tokens=3 delims= " %%S in ('dir /s /a /-c "%%F" 2^>nul ^| findstr /i /c:"File(s)"') do (
             set "folder_size=%%S"
+            set "size_found=1"
+        )
+        if "!size_found!"=="0" (
+            set "error_folder=%%F"
+            set "error_file_path="
+            set "error_detail=Unable to calculate folder size."
+            call :LogError
         )
 
-        for /f "delims=" %%C in ('dir /b /s /a "%%F" 2^>nul') do (
+        for /f "delims=" %%C in ('dir /b /s /a "%%F" 2^>"!content_error_file!"') do (
             set /a content_count+=1
             set "item_name=%%~nxC"
             set "item_name=!item_name:"='!"
@@ -162,6 +172,15 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
 
             :: detect if item name contains 'prompt' (case-insensitive)
             echo !item_name! | findstr /i "prompt" >nul 2>nul && set "has_prompt=1"
+        )
+        if exist "!content_error_file!" (
+            set "error_folder=%%F"
+            set "error_file_path="
+            for /f "delims=" %%E in ('type "!content_error_file!"') do (
+                set "error_detail=%%E"
+                call :LogError
+            )
+            del /q "!content_error_file!" >nul 2>&1
         )
 
         if "%sim_mode%"=="True" (
@@ -189,13 +208,26 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
 
             :: attempt rename/move (do not delete this folder)
             move "%%F" "!target_dir!" >nul 2>&1
-            echo Renamed "%%F" to "!target_dir!"
+            if errorlevel 1 (
+                set "error_folder=%%F"
+                set "error_file_path="
+                set "error_detail=Unable to rename folder to !target_dir!."
+                call :LogError
+            ) else (
+                echo Renamed "%%F" to "!target_dir!"
+            )
             set "skip_delete=1"
         )
 
         if "%sim_mode%"=="False" (
             if not "!skip_delete!"=="1" (
                 rmdir /s /q "%%F"
+                if errorlevel 1 (
+                    set "error_folder=%%F"
+                    set "error_file_path="
+                    set "error_detail=Unable to delete folder."
+                    call :LogError
+                )
             )
         )
     )
@@ -210,3 +242,11 @@ echo "%log_file%"
 echo ==================================================
 echo.
 pause
+exit /b 0
+
+:LogError
+>>"%error_file%" echo [%date% %time%] %error_detail%
+>>"%error_file%" echo Archive folder: %error_folder%
+>>"%error_file%" echo File path: %error_file_path%
+>>"%error_file%" echo.
+exit /b 0
