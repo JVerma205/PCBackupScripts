@@ -76,18 +76,7 @@ if not exist "%temp_file%" (
 :: ==================================================
 :: 3. INITIALIZE CSV LOG FILE
 :: ==================================================
-
-:: Write CSV header only if the log file does not already exist
-if not exist "%log_file%" (
-    (
-        echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
-    ) >> "%log_file%"
-    echo Log file initialized at: "%log_file%"
-    echo.
-) else (
-    echo Appending to existing log: "%log_file%"
-    echo.
-)
+call "%~dp0common.bat" :CSVHeaderSetup
 
 
 :: ==================================================

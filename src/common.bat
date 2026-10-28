@@ -1,5 +1,6 @@
 @echo off
 if /i "%~1"==":LogFileSetup" goto :LogFileSetup
+if /i "%~1"==":CSVHeaderSetup" goto :CSVHeaderSetup
 if /i "%~1"==":LogError" goto :LogError
 exit /b 0
 
@@ -50,6 +51,22 @@ if not exist "%prompt_log_file%" (
 	echo Appending to existing prompt-folders log: "%prompt_log_file%"
 )
 exit /b 0
+
+
+:CSVHeaderSetup
+:: Write CSV header only if the log file does not already exist
+if not exist "%log_file%" (
+    (
+        echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
+    ) >> "%log_file%"
+    echo Log file initialized at: "%log_file%"
+    echo.
+) else (
+    echo Appending to existing log: "%log_file%"
+    echo.
+)
+exit /b 0
+
 
 :LogError
 >>"%error_file%" echo [%date% %time%] %error_detail%
