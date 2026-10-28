@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+call "%~dp0config.bat"
 
 :: ==================================================
 :: 1. USER INPUT & CONFIGURATION
@@ -82,10 +83,10 @@ for /f "delims=" %%F in ('dir /b /s /ad "%user_dir%" 2^>nul') do (
     set "folder_name=%%~nxF"
     set "is_match=0"
 
-    :: Check if folder name is 'arc' or starts with 'arch'
-    if /i "!folder_name!"=="arc" set "is_match=1"
-    if /i "!folder_name!"=="temp" set "is_match=1"
-    if /i "!folder_name!"=="processed-mats" set "is_match=1"
+    :: Check the configured names and names starting with 'arch'
+    for %%N in (!match_folders!) do (
+        if /i "!folder_name!"=="%%N" set "is_match=1"
+    )
     if /i "!folder_name:~0,4!"=="arch" set "is_match=1"
 
     if "!is_match!"=="1" (
@@ -159,7 +160,7 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
             set "error_folder=%%F"
             set "error_file_path="
             set "error_detail=Unable to calculate folder size."
-            call :LogError
+            call "%~dp0common.bat" :LogError
         )
 
         for /f "delims=" %%C in ('dir /b /s /a "%%F" 2^>"!content_error_file!"') do (
@@ -180,7 +181,7 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
             set "error_file_path="
             for /f "delims=" %%E in ('type "!content_error_file!"') do (
                 set "error_detail=%%E"
-                call :LogError
+                call "%~dp0common.bat" :LogError
             )
             del /q "!content_error_file!" >nul 2>&1
         )
@@ -214,7 +215,7 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
                 set "error_folder=%%F"
                 set "error_file_path="
                 set "error_detail=Unable to rename folder to !target_dir!."
-                call :LogError
+                call "%~dp0common.bat" :LogError
             ) else (
                 echo Renamed "%%F" to "!target_dir!"
             )
@@ -228,7 +229,7 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
                     set "error_folder=%%F"
                     set "error_file_path="
                     set "error_detail=Unable to delete folder."
-                    call :LogError
+                    call "%~dp0common.bat" :LogError
                 )
             )
         )
