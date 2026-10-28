@@ -2,6 +2,7 @@
 if /i "%~1"==":LogFileSetup" goto :LogFileSetup
 if /i "%~1"==":CSVHeaderSetup" goto :CSVHeaderSetup
 if /i "%~1"==":LogError" goto :LogError
+if /i "%~1"==":writeRowToLogFile" goto :writeRowToLogFile
 exit /b 0
 
 :LogFileSetup
@@ -67,6 +68,81 @@ if not exist "%log_file%" (
 )
 exit /b 0
 
+
+:writeRowToLogFile
+set "folder_path=%~2"
+for %%P in ("%~2") do (
+	set "folder_name=%%~nxP"
+	set "last_mod=%%~tP"
+)
+set "content_count=0"
+set "folder_size=0"
+set "content_list="
+set "has_prompt=0"
+set "skip_delete=0"
+set "size_found=0"
+set "content_error_file=%temp%\arc_content_error_!RANDOM!.tmp"
+
+for /f "tokens=3 delims= " %%S in ('dir /s /a /-c "%~2" 2^>nul ^| findstr /i /c:"File(s)"') do (
+	set "folder_size=%%S"
+	set "size_found=1"
+)
+if "!size_found!"=="0" (
+	set "error_folder=%~2"
+	set "error_file_path="
+	set "error_detail=Unable to calculate folder size."
+	call :LogError
+)
+
+for /f "delims=" %%C in ('dir /b /s /a "%~2" 2^>"!content_error_file!"') do (
+	set /a content_count+=1
+	set "item_name=%%~nxC"
+	set "item_name=!item_name:"='!"
+	if defined content_list (
+		set "content_list=!content_list!;!item_name!"
+	) else (
+		set "content_list=!item_name!"
+	)
+	echo !item_name! | findstr /i "prompt" >nul 2>nul && set "has_prompt=1"
+)
+if exist "!content_error_file!" (
+	set "error_folder=%~2"
+	set "error_file_path="
+	for /f "delims=" %%E in ('type "!content_error_file!"') do (
+		set "error_detail=%%E"
+		call :LogError
+	)
+	del /q "!content_error_file!" >nul 2>&1
+)
+
+if "%sim_mode%"=="True" (
+	echo [SIMULATION] Logging: "%~2"
+) else (
+	echo Logging and executing: "%~2"
+)
+set "folder_path_esc=!folder_path:"=""!"
+set "last_mod_esc=!last_mod:"=""!"
+set "content_list_esc=!content_list:"=""!"
+set "csv_line="!folder_name!,"!folder_path_esc!,"!last_mod_esc!,"!content_count!,"!folder_size!,"!content_list_esc!,"!sim_mode!""
+>> "%log_file%" echo !csv_line!
+
+if "!has_prompt!"=="1" if /i not "%~3"=="NoPromptRename" (
+	>> "%prompt_log_file%" echo !csv_line!
+	for %%P in ("%~2") do set "parent_dir=%%~dpP"
+	set "target_dir=!parent_dir!Prompts"
+	if exist "!target_dir!" set "target_dir=!parent_dir!Prompts_!random!"
+	move "%~2" "!target_dir!" >nul 2>&1
+	if errorlevel 1 (
+		set "error_folder=%~2"
+		set "error_file_path="
+		set "error_detail=Unable to rename folder to !target_dir!."
+		call :LogError
+	) else (
+		echo Renamed "%~2" to "!target_dir!"
+	)
+	set "skip_delete=1"
+)
+exit /b 0
 
 :LogError
 >>"%error_file%" echo [%date% %time%] %error_detail%
