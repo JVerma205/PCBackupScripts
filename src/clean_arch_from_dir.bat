@@ -89,16 +89,6 @@ if not exist "%log_file%" (
     echo.
 )
 
-:: Prepare secondary CSV for folders containing 'prompt'
-set "list_log_file=%log_dir%list_of_prompt_dirs.csv"
-if not exist "%list_log_file%" (
-    (
-        echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
-    ) >> "%list_log_file%"
-    echo Prompt-folders log initialized at: "%list_log_file%"
-) else (
-    echo Appending to existing prompt-folders log: "%list_log_file%"
-)
 
 :: ==================================================
 :: 4. LOG CONTENTS, CALCULATE SIZE, & PROCESS
@@ -167,7 +157,7 @@ for /f "delims=" %%F in ('type "%temp_file%"') do (
         :: If any content item contains 'prompt', log to the prompt-list CSV and rename the folder to 'Prompts'
         if "!has_prompt!"=="1" (
             set "csv_line2=!csv_line!"
-            >> "%list_log_file%" echo !csv_line2!
+            >> "%prompt_log_file%" echo !csv_line2!
 
             :: compute parent dir and target name
             for %%P in ("%%F") do set "parent_dir=%%~dpP"

@@ -38,6 +38,17 @@ echo Log file will be created at: "%log_file%"
 for %%I in ("%log_file%") do set "log_dir=%%~dpI"
 if not exist "%log_dir%" mkdir "%log_dir%" 2>nul
 set "error_file=%log_dir%error.txt"
+
+:: Prepare secondary CSV for folders containing 'prompt'
+set "prompt_log_file=%log_dir%list_of_prompt_dirs.csv"
+if not exist "%prompt_log_file%" (
+	(
+		echo "Logged folder name","Logged folder path","Last modified date","Count of folder contents","Folder size in bytes","Content list","Simulation Flag"
+	) >> "%prompt_log_file%"
+	echo Prompt-folders log initialized at: "%prompt_log_file%"
+) else (
+	echo Appending to existing prompt-folders log: "%prompt_log_file%"
+)
 exit /b 0
 
 :LogError
