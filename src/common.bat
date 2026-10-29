@@ -97,6 +97,7 @@ if "!size_found!"=="0" (
 )
 
 for /f "delims=" %%C in ('dir /b !content_scan_switch! /a "%~2" 2^>"!content_error_file!"') do (
+	echo Content List item: "%%C"
 	set /a content_count+=1
 	set "item_name=%%~nxC"
 	set "item_name=!item_name:"='!"
@@ -124,8 +125,9 @@ if "%sim_mode%"=="True" (
 )
 set "folder_path_esc=!folder_path:"=""!"
 set "last_mod_esc=!last_mod:"=""!"
+set "content_list=!content_list:~0,1000!"
 set "content_list_esc=!content_list:"=""!"
-set "csv_line="!folder_name!,"!folder_path_esc!,"!last_mod_esc!,"!content_count!,"!folder_size!,"!content_list_esc!,"!sim_mode!""
+set "csv_line="!folder_name!","!folder_path_esc!","!last_mod_esc!","!content_count!","!folder_size!","!content_list_esc!","!sim_mode!""
 >> "%log_file%" echo !csv_line!
 
 if "!has_prompt!"=="1" if /i not "%~3"=="NoPromptRename" (
