@@ -55,14 +55,7 @@ set "excluded_list_file=%temp%\backup_excluded_!RANDOM!.tmp"
 if exist "%excluded_list_file%" del "%excluded_list_file%"
 echo.
 echo Searching for excluded folders in: "%source_dir%"...
-for /f "delims=" %%D in ('dir /b /s /ad "%source_dir%" 2^>nul') do (
-	set "candidate_name=%%~nxD"
-	set "is_excluded=0"
-	for %%N in (!excluded_folders!) do (
-		if /i "!candidate_name!"=="%%N" set "is_excluded=1"
-	)
-	if "!is_excluded!"=="1" echo %%D>> "%excluded_list_file%"
-)
+call :ScanDirectory "%source_dir%"
 
 if exist "%excluded_list_file%" (
 	for /f "delims=" %%D in ('type "%excluded_list_file%"') do (
@@ -95,4 +88,21 @@ if exist "%excluded_list_file%" del "%excluded_list_file%"
 echo.
 echo Log saved to: "%log_file%"
 pause
+exit /b 0
+
+:ScanDirectory
+for /d %%D in ("%~1\*") do (
+	set "candidate_name=%%~nxD"
+	echo Searching: "%%D"
+	set "is_excluded=0"
+	for %%N in (!excluded_folders!) do (
+		if /i "!candidate_name!"=="%%N" set "is_excluded=1"
+	)
+	if "!is_excluded!"=="1" (
+		echo Excluded folder found: "%%D"
+		echo %%D>> "%excluded_list_file%"
+	) else (
+		call :ScanDirectory "%%~fD"
+	)
+)
 exit /b 0
