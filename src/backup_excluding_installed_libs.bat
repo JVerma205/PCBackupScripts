@@ -63,10 +63,17 @@ if exist "%excluded_list_file%" (
 	)
 )
 
+set "robocopy_excludes="
+if exist "%excluded_list_file%" (
+	for /f "usebackq delims=" %%D in ("%excluded_list_file%") do (
+		set "robocopy_excludes=!robocopy_excludes! "%%D""
+	)
+)
+
 if "%sim_flag%"=="False" (
 	echo.
 	echo Copying from "%source_dir%" to "%destination_dir%"...
-	robocopy "%source_dir%" "%destination_dir%" /E /XD !excluded_folders! "%destination_full%" /COPY:DAT /DCOPY:DAT /R:2 /W:2
+	robocopy "%source_dir%" "%destination_dir%" /E /XD !robocopy_excludes! "%destination_full%" /COPY:DAT /DCOPY:DAT /R:2 /W:2
 	set "copy_exit_code=!errorlevel!"
 	if !copy_exit_code! geq 8 (
 		set "error_folder=%source_dir%"
@@ -98,6 +105,8 @@ for /d %%D in ("%~1\*") do (
 	for %%N in (!excluded_folders!) do (
 		if /i "!candidate_name!"=="%%N" set "is_excluded=1"
 	)
+    if /i "!candidate_name:~0,4!"=="arch" set "is_excluded=1"
+
 	if "!is_excluded!"=="1" (
 		echo Excluded folder found: "%%D"
 		echo %%D>> "%excluded_list_file%"
