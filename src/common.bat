@@ -82,6 +82,8 @@ set "has_prompt=0"
 set "skip_delete=0"
 set "size_found=0"
 set "content_error_file=%temp%\arc_content_error_!RANDOM!.tmp"
+set "content_scan_switch=/s"
+if /i "%~4"=="True" set "content_scan_switch="
 
 for /f "tokens=3 delims= " %%S in ('dir /s /a /-c "%~2" 2^>nul ^| findstr /i /c:"File(s)"') do (
 	set "folder_size=%%S"
@@ -94,7 +96,7 @@ if "!size_found!"=="0" (
 	call :LogError
 )
 
-for /f "delims=" %%C in ('dir /b /s /a "%~2" 2^>"!content_error_file!"') do (
+for /f "delims=" %%C in ('dir /b !content_scan_switch! /a "%~2" 2^>"!content_error_file!"') do (
 	set /a content_count+=1
 	set "item_name=%%~nxC"
 	set "item_name=!item_name:"='!"

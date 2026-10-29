@@ -59,7 +59,7 @@ call :ScanDirectory "%source_dir%"
 
 if exist "%excluded_list_file%" (
 	for /f "delims=" %%D in ('type "%excluded_list_file%"') do (
-		call "%~dp0common.bat" :writeRowToLogFile "%%D"
+		call "%~dp0common.bat" :writeRowToLogFile "%%D" NoPromptRename True
 	)
 )
 
